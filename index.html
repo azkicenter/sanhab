@@ -614,24 +614,33 @@ function sessionExpired() {
 }
 // ---------- اتصال مقاوم: اگر سرور قطع/ری‌استارت شد، config.js دوباره خوانده می‌شود و درخواست خودکار تکرار می‌شود ----------
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-function reloadConfig() {
-  return new Promise(res => {
-    const sc = document.createElement("script");
-    sc.src = "config.js?v=" + Date.now();
-    sc.onload = sc.onerror = () => { sc.remove(); res(); };
-    document.head.appendChild(sc);
-  });
+// config.js را به‌صورت متن و بدون کش می‌خوانیم و آدرس سرور را از آن درمی‌آوریم.
+// (اضافه‌کردن دوباره‌ی <script> ممکن است اگر config.js با const/let نوشته شده باشد خطای "already declared" بدهد و آدرس هیچ‌وقت عوض نشود.)
+async function reloadConfig() {
+  try {
+    const r = await fetch("config.js?v=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) return;
+    const txt = await r.text();
+    const m = txt.match(/API_BASE["']?\s*[:=]\s*["'`]([^"'`]*)["'`]/) || txt.match(/(https?:\/\/[^\s"'`]+)/);
+    if (m) window.APP_CONFIG = Object.assign({}, window.APP_CONFIG, { API_BASE: m[1] });
+  } catch (_) {}
 }
-const RETRY_DELAYS = [0, 1500, 3000, 5000, 8000];   // حدود ۱۸ ثانیه تلاش دوباره
-const SERVER_DOWN = [502, 503, 504, 530];
-function notifyRetry() {
-  const msg = "ارتباط با سرور قطع شد؛ در حال اتصال دوباره…";
+// سرور بعد از قطعی تا حدود ۳ دقیقه خودکار دوباره امتحان می‌شود (ری‌استارت سرور + تونل + آپدیت config.js زمان می‌برد)
+const RETRY_DELAYS = [0, 1500, 3000, 5000, 8000, 10000, 10000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000];
+const SERVER_DOWN = [502, 503, 504, 530, 521, 522, 523, 524];
+function notifyRetry(n, total) {
+  const msg = `ارتباط با سرور قطع شد؛ در حال اتصال دوباره… (تلاش ${n} از ${total}) — نیازی به رفرش نیست`;
   if ($("app").classList.contains("hidden")) loginStatus(msg, "loading"); else setStatus(msg, "loading");
 }
-async function resilientFetch(path, opts) {
+async function resilientFetch(path, opts, isStale) {
   let lastErr;
   for (let i = 0; i < RETRY_DELAYS.length; i++) {
-    if (RETRY_DELAYS[i]) { notifyRetry(); await sleep(RETRY_DELAYS[i]); }
+    if (RETRY_DELAYS[i]) {
+      if (isStale && isStale()) throw new Error(NEED_LOGIN);
+      notifyRetry(i, RETRY_DELAYS.length - 1);
+      await sleep(RETRY_DELAYS[i]);
+      if (isStale && isStale()) throw new Error(NEED_LOGIN);
+    }
     try {
       const res = await fetch(BASE + path, opts);
       if (!SERVER_DOWN.includes(res.status)) return res;
@@ -726,8 +735,8 @@ $("confirmForm").addEventListener("submit", async e => {
 $("enrollBack").addEventListener("click", () => { enrollTicket = ""; $("qr").innerHTML = ""; showPane("enrollForm"); });
 
 // ---------- فراخوانی سرور ----------
-async function call(params) {
-  const res = await resilientFetch(API_PATH + "?" + new URLSearchParams(params), { headers: { Authorization: "Bearer " + store.get(TOKEN_KEY) } });
+async function call(params, isStale) {
+  const res = await resilientFetch(API_PATH + "?" + new URLSearchParams(params), { headers: { Authorization: "Bearer " + store.get(TOKEN_KEY) } }, isStale);
   if (res.status === 401) { sessionExpired(); throw new Error(NEED_LOGIN); }
   let r = {}; try { r = await res.json(); } catch (_) {}
   if (r.error) throw new Error(r.error);
@@ -909,7 +918,7 @@ async function loadDetails(myId, rowIds) {
   const total = rowIds.length;
   const progress = () => setStatus(`دریافت جزئیات ${done} از ${total} بیمه‌نامه…`, "loading");
   const fetchOne = async id => {
-    const r = await call({ ...current, rows: id });
+    const r = await call({ ...current, rows: id }, () => myId !== searchId);
     return r.details?.[id];
   };
   const failed = [];
@@ -954,7 +963,7 @@ $("f").addEventListener("submit", async e => {
   setStatus("در حال استعلام... (ممکن است چند ثانیه طول بکشد)", "loading");
   try {
     current = q.params;
-    const r = await call(current);
+    const r = await call(current, () => myId !== searchId);
     if (myId !== searchId) return;
     const typeLabel = typeEl.options[typeEl.selectedIndex].textContent;
     printTitleEl.textContent = `استعلام بیمه‌نامه ثالث — ${typeLabel}: ${value} — تاریخ چاپ: ${new Date().toLocaleDateString("fa-IR")}`;
@@ -980,7 +989,7 @@ $("f").addEventListener("submit", async e => {
     await loadDetails(myId, ids.filter(id => !id.startsWith("r")));
   } catch (err) {
     if (err.message === NEED_LOGIN) setStatus("");
-    else setStatus(err.message === "Failed to fetch" ? "خطای اتصال به سرور: سرور در دسترس نیست." : "خطا: " + err.message, "error");
+    else setStatus(err.message === "Failed to fetch" ? "سرور تا چند دقیقه در دسترس نبود. نیازی به رفرش نیست؛ کمی بعد دوباره دکمه‌ی جستجو را بزنید." : "خطا: " + err.message, "error");
   } finally {
     if (myId === searchId) $("go").disabled = false;
   }
