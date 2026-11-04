@@ -231,7 +231,7 @@
   .holder-name { font-weight: 600; }
 
   /* --- شرکت با لوگو --- */
-  .company-cell { display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .company-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
   .company-logo { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
   html[data-theme="dark"] .company-logo { background: rgba(255,255,255,.92); border-radius: 7px; padding: 2px; }
 
@@ -264,6 +264,9 @@
     white-space: nowrap;
   }
   .field-line.field-line--inline { display: inline-flex; }
+  /* موتور / شاسی / وین: زیر هم و راست‌چین (لبه‌ی راست برچسب‌ها هم‌تراز) */
+  .ids-cell { text-align: right; }
+  .ids-cell .field-line { justify-content: flex-start; }
   .field-line .field-label { color: var(--ink-soft); font-weight: 600; flex-shrink: 0; }
   .field-line .field-value {
     font-family: inherit;
@@ -331,8 +334,8 @@
   .plate-national .plate-serial-text {
     left: 78%;
     width: 20%;
-    top: 6%;
-    height: 88%;
+    top: 20%;      /* عدد سریال کمی پایین‌تر از وسط کادر */
+    height: 80%;
     font-size: 0.66rem;
   }
   .plate-freezone { background-image: url('plates/freezone.jpg'); }
@@ -990,7 +993,7 @@ function rowCells(rowId) {
     <td><div class="holder-name">${dash(L.holder)}</div>${v && !empty(v.nationalId) ? copyField("کدملی: ", v.nationalId) : ""}</td>
     <td>${wait(() => renderPlateVisual(plate, serial))}</td>
     <td>${wait(() => `${dash(v?.vtype)}${v && !empty(v.model) ? `<div class="muted">مدل ${h(v.model)}</div>` : ""}`)}</td>
-    <td>${wait(() => copyField("موتور: ", v?.engine) + copyField("شاسی: ", v?.chassis) + copyField("وین: ", v?.vin))}</td>
+    <td class="ids-cell">${wait(() => copyField("موتور: ", v?.engine) + copyField("شاسی: ", v?.chassis) + copyField("وین: ", v?.vin))}</td>
     <td class="num">${dash(L.start)}</td>
     <td class="num">${dash(L.end)}</td>
     <td>${wait(() => discCell(v?.tpPct, v?.tpYears))}</td>
