@@ -129,10 +129,8 @@
   #themeBtn .icon-sun { display: none; }
   html[data-theme="dark"] #themeBtn .icon-sun { display: block; }
   html[data-theme="dark"] #themeBtn .icon-moon { display: none; }
-  #logoutBtn {
-    height: 40px; padding: 0 16px; border-radius: 20px; font-size: .82rem; font-weight: 700; color: var(--danger);
-    background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); transition: background .15s, border-color .15s;
-  }
+  /* دکمه‌ی خروج: آیکن در (هم‌اندازه‌ی دکمه‌ی تم)، قرمز */
+  #logoutBtn { color: var(--danger); transition: background .15s, border-color .15s; }
   #logoutBtn:hover { background: var(--danger-soft); border-color: var(--danger); }
 
   /* ---------- فرم جستجو ---------- */
@@ -466,7 +464,6 @@
   @media (max-width: 560px) {
     .brand-text small { display: none; }
     #userName { display: none; }
-    #logoutBtn { padding: 0 12px; }
   }
 
   /* ========== حالت چاپ / PDF (همیشه روشن) ========== */
@@ -506,7 +503,9 @@
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
     </button>
-    <button type="button" id="logoutBtn" class="hidden">خروج</button>
+    <button type="button" id="logoutBtn" class="icon-btn hidden" title="خروج" aria-label="خروج">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/></svg>
+    </button>
   </header>
 
   <div id="login" class="login-wrap hidden">
