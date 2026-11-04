@@ -914,42 +914,39 @@ function openRow(tr) {
 }
 
 async function loadDetails(myId, rowIds) {
-  let done = 0, next = 0;
+  const BATCH = 3;                       // هر درخواست ۳ بیمه‌نامه، به ترتیب از بالا به پایین
+  let done = 0;
   const total = rowIds.length;
+  const stale = () => myId !== searchId;
   const progress = () => setStatus(`دریافت جزئیات ${done} از ${total} بیمه‌نامه…`, "loading");
+  const fetchMany = async ids => {
+    const r = await call({ ...current, rows: ids.join(",") }, stale);
+    return r.details || {};
+  };
   const fetchOne = async id => {
-    const r = await call({ ...current, rows: id }, () => myId !== searchId);
+    const r = await call({ ...current, rows: id }, stale);
     return r.details?.[id];
   };
-  const failed = [];
+  const ok = d => d && !d.error;
   progress();
-  // چند درخواست هم‌زمان؛ هر بیمه‌نامه در یک درخواست جدا
-  const worker = async () => {
-    while (next < total) {
-      if (myId !== searchId) return;
-      const id = rowIds[next++];
-      try {
-        const d = await fetchOne(id);
-        if (myId !== searchId) return;
-        if (!d || d.error) failed.push(id);
-        else { detailMap[id] = d; refreshRow(id); done++; progress(); }
-      } catch (err) {
-        if (err.message === NEED_LOGIN) { next = total; return; }
-        failed.push(id);
+  for (let i = 0; i < total; i += BATCH) {
+    if (stale()) return;
+    const ids = rowIds.slice(i, i + BATCH);
+    let got = {};
+    try { got = await fetchMany(ids); }
+    catch (err) { if (err.message === NEED_LOGIN) return; }
+    if (stale()) return;
+    for (const id of ids) {
+      let d = got[id];
+      if (!ok(d)) {                      // اگر در دسته نیامد/خطا داد، همان لحظه تک‌به‌تک دوباره امتحان می‌شود
+        try { d = await fetchOne(id); } catch (err) { if (err.message === NEED_LOGIN) return; }
+        if (stale()) return;
       }
+      detailMap[id] = ok(d) ? d : { error: true };
+      refreshRow(id); done++; progress();
     }
-  };
-  await Promise.all(Array.from({ length: Math.min(DETAIL_CONCURRENCY, total) }, worker));
-  // ردیف‌هایی که خطا دادند یک بار دیگر، این بار تک‌به‌تک، دوباره امتحان می‌شوند
-  for (const id of failed) {
-    if (myId !== searchId) return;
-    let d = null;
-    try { d = await fetchOne(id); } catch (err) { if (err.message === NEED_LOGIN) return; }
-    if (myId !== searchId) return;
-    detailMap[id] = d && !d.error ? d : { error: true };
-    refreshRow(id); done++; progress();
   }
-  if (myId === searchId) setStatus(`تعداد بیمه‌نامه یافت‌شده: ${total} — برای دیدن خسارت و الحاقیه روی ردیف کلیک کنید`);
+  if (!stale()) setStatus(`تعداد بیمه‌نامه یافت‌شده: ${total} — برای دیدن خسارت و الحاقیه روی ردیف کلیک کنید`);
 }
 
 // ---------- جستجو ----------
