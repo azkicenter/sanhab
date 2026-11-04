@@ -515,12 +515,13 @@
 </div>
 <script>
 // آدرس بک‌اند در config.js است (برای اجرای محلی خالی بماند).
-const BASE = String(window.APP_CONFIG?.API_BASE ?? window.API_BASE ?? (location.protocol === "file:" ? "http://localhost:8765" : "")).replace(/\/+$/, "");
-const API = BASE + "/api/sanhab";
+const readBase = () => String(window.APP_CONFIG?.API_BASE ?? window.API_BASE ?? (location.protocol === "file:" ? "http://localhost:8765" : "")).replace(/\/+$/, "");
+let BASE = readBase();
+const API_PATH = "/api/sanhab";
 const $ = id => document.getElementById(id);
 const out = $("out"), statusEl = $("status"), printTitleEl = $("printTitle"), typeEl = $("type");
 const COLS = 11;              // تعداد ستون‌های جدول
-const DETAIL_BATCH = 3;       // جزئیات چند ردیف در هر درخواست
+const DETAIL_CONCURRENCY = 3; // تعداد درخواست‌های هم‌زمان برای جزئیات (اگر خطا زیاد شد 1 بگذارید)
 
 // ---------- کمکی‌ها ----------
 const h = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -611,10 +612,41 @@ function sessionExpired() {
   store.del(TOKEN_KEY);
   showLogin("نشست شما تمام شده؛ دوباره وارد شوید.");
 }
+// ---------- اتصال مقاوم: اگر سرور قطع/ری‌استارت شد، config.js دوباره خوانده می‌شود و درخواست خودکار تکرار می‌شود ----------
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function reloadConfig() {
+  return new Promise(res => {
+    const sc = document.createElement("script");
+    sc.src = "config.js?v=" + Date.now();
+    sc.onload = sc.onerror = () => { sc.remove(); res(); };
+    document.head.appendChild(sc);
+  });
+}
+const RETRY_DELAYS = [0, 1500, 3000, 5000, 8000];   // حدود ۱۸ ثانیه تلاش دوباره
+const SERVER_DOWN = [502, 503, 504, 530];
+function notifyRetry() {
+  const msg = "ارتباط با سرور قطع شد؛ در حال اتصال دوباره…";
+  if ($("app").classList.contains("hidden")) loginStatus(msg, "loading"); else setStatus(msg, "loading");
+}
+async function resilientFetch(path, opts) {
+  let lastErr;
+  for (let i = 0; i < RETRY_DELAYS.length; i++) {
+    if (RETRY_DELAYS[i]) { notifyRetry(); await sleep(RETRY_DELAYS[i]); }
+    try {
+      const res = await fetch(BASE + path, opts);
+      if (!SERVER_DOWN.includes(res.status)) return res;
+      lastErr = new Error("Failed to fetch");
+    } catch (e) { lastErr = e; }
+    await reloadConfig();            // شاید آدرس سرور بعد از ری‌استارت عوض شده باشد
+    BASE = readBase();
+  }
+  throw lastErr;
+}
 async function postJSON(path, body) {
+  if (!BASE && location.protocol !== "file:" && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { await reloadConfig(); BASE = readBase(); }
   if (!BASE && location.protocol !== "file:" && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname))
     throw new Error("آدرس سرور در config.js خالی است؛ start_sanhab.bat روی سرور اجرا نشده یا config.js هنوز push نشده.");
-  const res = await fetch(BASE + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const res = await resilientFetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   let r = {}; try { r = await res.json(); } catch (_) {}
   if (!res.ok) throw new Error(r.error || `سرور جواب درست نداد (کد ${res.status}). پنجره‌ی start_sanhab.bat روی سرور را بررسی کنید.`);
   return r;
@@ -695,7 +727,7 @@ $("enrollBack").addEventListener("click", () => { enrollTicket = ""; $("qr").inn
 
 // ---------- فراخوانی سرور ----------
 async function call(params) {
-  const res = await fetch(API + "?" + new URLSearchParams(params), { headers: { Authorization: "Bearer " + store.get(TOKEN_KEY) } });
+  const res = await resilientFetch(API_PATH + "?" + new URLSearchParams(params), { headers: { Authorization: "Bearer " + store.get(TOKEN_KEY) } });
   if (res.status === 401) { sessionExpired(); throw new Error(NEED_LOGIN); }
   let r = {}; try { r = await res.json(); } catch (_) {}
   if (r.error) throw new Error(r.error);
@@ -873,20 +905,42 @@ function openRow(tr) {
 }
 
 async function loadDetails(myId, rowIds) {
-  for (let i = 0; i < rowIds.length; i += DETAIL_BATCH) {
-    if (myId !== searchId) return;                      // جستجوی جدید شروع شده
-    const chunk = rowIds.slice(i, i + DETAIL_BATCH);
-    setStatus(`دریافت جزئیات ${Math.min(i + chunk.length, rowIds.length)} از ${rowIds.length} بیمه‌نامه…`, "loading");
-    try {
-      const r = await call({ ...current, rows: chunk.join(",") });
+  let done = 0, next = 0;
+  const total = rowIds.length;
+  const progress = () => setStatus(`دریافت جزئیات ${done} از ${total} بیمه‌نامه…`, "loading");
+  const fetchOne = async id => {
+    const r = await call({ ...current, rows: id });
+    return r.details?.[id];
+  };
+  const failed = [];
+  progress();
+  // چند درخواست هم‌زمان؛ هر بیمه‌نامه در یک درخواست جدا
+  const worker = async () => {
+    while (next < total) {
       if (myId !== searchId) return;
-      chunk.forEach(id => { detailMap[id] = r.details?.[id] || { error: true }; refreshRow(id); });
-    } catch (err) {
-      if (err.message === NEED_LOGIN) return;
-      chunk.forEach(id => { detailMap[id] = { error: true }; refreshRow(id); });
+      const id = rowIds[next++];
+      try {
+        const d = await fetchOne(id);
+        if (myId !== searchId) return;
+        if (!d || d.error) failed.push(id);
+        else { detailMap[id] = d; refreshRow(id); done++; progress(); }
+      } catch (err) {
+        if (err.message === NEED_LOGIN) { next = total; return; }
+        failed.push(id);
+      }
     }
+  };
+  await Promise.all(Array.from({ length: Math.min(DETAIL_CONCURRENCY, total) }, worker));
+  // ردیف‌هایی که خطا دادند یک بار دیگر، این بار تک‌به‌تک، دوباره امتحان می‌شوند
+  for (const id of failed) {
+    if (myId !== searchId) return;
+    let d = null;
+    try { d = await fetchOne(id); } catch (err) { if (err.message === NEED_LOGIN) return; }
+    if (myId !== searchId) return;
+    detailMap[id] = d && !d.error ? d : { error: true };
+    refreshRow(id); done++; progress();
   }
-  if (myId === searchId) setStatus(`تعداد بیمه‌نامه یافت‌شده: ${rowIds.length} — برای دیدن خسارت و الحاقیه روی ردیف کلیک کنید`);
+  if (myId === searchId) setStatus(`تعداد بیمه‌نامه یافت‌شده: ${total} — برای دیدن خسارت و الحاقیه روی ردیف کلیک کنید`);
 }
 
 // ---------- جستجو ----------
@@ -901,6 +955,7 @@ $("f").addEventListener("submit", async e => {
   try {
     current = q.params;
     const r = await call(current);
+    if (myId !== searchId) return;
     const typeLabel = typeEl.options[typeEl.selectedIndex].textContent;
     printTitleEl.textContent = `استعلام بیمه‌نامه ثالث — ${typeLabel}: ${value} — تاریخ چاپ: ${new Date().toLocaleDateString("fa-IR")}`;
     if (!r.rows.length) { setStatus(""); out.innerHTML = '<p class="empty-note">نتیجه‌ای یافت نشد.</p>'; return; }
@@ -929,6 +984,19 @@ $("f").addEventListener("submit", async e => {
   } finally {
     if (myId === searchId) $("go").disabled = false;
   }
+});
+
+// ---------- پاک شدن نتیجه‌ی قبلی با تغییر نوع یا مقدار جستجو ----------
+function clearResults() {
+  if (!out.innerHTML && !statusEl.innerHTML) return;
+  searchId++;                       // جستجو/دریافت جزئیات در حال انجام نادیده گرفته می‌شود
+  out.innerHTML = ""; setStatus(""); printTitleEl.textContent = "";
+  listMap = {}; detailMap = {};
+  $("go").disabled = false;
+}
+["type", "val", "pl2", "plL", "pl3", "plS", "pEng", "pCha"].forEach(id => {
+  $(id).addEventListener("input", clearResults);
+  $(id).addEventListener("change", clearResults);
 });
 
 // ---------- کلیک‌ها ----------
