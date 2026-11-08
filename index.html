@@ -172,7 +172,7 @@
   .plate-inputs .sep { color: var(--ink-soft); font-size: 0.8rem; }
   #plateField .plate-inputs, #motoField .plate-inputs { justify-content: flex-end; }
   /* پلاک معمولی: ورودی‌ها روی خود تصویر پلاک (۳۵۰×۷۸) */
-  .plate-input { position: relative; width: min(100%, 320px); aspect-ratio: 350 / 78; margin-inline-start: auto; direction: ltr;
+  .plate-input { position: relative; width: min(100%, 230px); aspect-ratio: 350 / 78; margin-inline-start: auto; direction: ltr;
     background: url('plates/national.png') no-repeat center / 100% 100%; border-radius: 4px; container-type: inline-size; }
   .plate-input .pi { position: absolute; box-sizing: border-box; margin: 0; padding: 0; min-width: 0; border: 0; border-radius: 4px; background: transparent;
     box-shadow: none; color: #111; font-weight: 700; text-align: center; text-align-last: center; direction: ltr;
@@ -596,7 +596,6 @@
         <input id="val" type="text" required autocomplete="off" placeholder="مثلاً NAS821100M1317741">
       </div>
       <div class="field hidden" id="plateField" style="flex:2">
-        <label>پلاک (۲ رقم، حرف، ۳ رقم، سریال ایران)</label>
         <div class="plate-input" id="plateBox">
           <input id="pl2" class="pi pi2" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="12" aria-label="دو رقم اول">
           <select id="plL" class="pi piL" aria-label="حرف"></select>
@@ -697,7 +696,7 @@ const PLACEHOLDERS = {
 const PLATE_LETTERS = [[1,"الف"],[2,"ب"],[3,"ت"],[4,"ث"],[5,"ج"],[6,"ح"],[7,"د"],[8,"س"],[9,"ش"],[10,"ص"],[11,"ط"],[12,"ع"],[13,"ف"],[14,"ق"],[15,"ل"],[16,"م"],[17,"ن"],[18,"و"],[19,"ه"],[20,"ی"],[21,"ر"],[22,"ز"],[23,"ک"],[24,"گ"],[25,"ژ"],[26,"پ"],[27,"D"],[28,"S"]];
 // سریال ایران (مثلاً 70) -> policeCodeId در سنهاب (فقط پلاک‌های شخصی)
 const IRAN_SERIAL = {"11": 79, "12": 80, "13": 81, "14": 82, "15": 83, "16": 84, "17": 85, "18": 86, "19": 87, "20": 88, "21": 89, "22": 90, "23": 91, "24": 92, "25": 93, "27": 95, "28": 96, "29": 97, "31": 98, "32": 99, "33": 100, "34": 101, "35": 102, "36": 103, "37": 104, "38": 105, "39": 106, "41": 107, "42": 108, "43": 109, "44": 110, "45": 111, "46": 112, "47": 113, "48": 114, "49": 115, "51": 116, "52": 117, "53": 118, "54": 119, "55": 120, "56": 121, "57": 122, "58": 123, "59": 124, "60": 125, "61": 126, "62": 127, "63": 128, "64": 129, "65": 130, "66": 131, "67": 132, "68": 133, "69": 134, "70": 135, "71": 136, "72": 137, "73": 138, "74": 139, "75": 140, "76": 141, "77": 142, "78": 143, "79": 144, "81": 145, "82": 146, "83": 147, "85": 149, "86": 150, "87": 151, "88": 152, "89": 153, "91": 154, "92": 155, "93": 156, "94": 157, "95": 158, "96": 159, "97": 160, "98": 161, "30": 892, "40": 893, "50": 894, "80": 895, "90": 896, "99": 897};
-$("plL").innerHTML = PLATE_LETTERS.map(([c, l]) => `<option value="${c}">${l}</option>`).join("");
+$("plL").innerHTML = `<option value="" selected></option>` + PLATE_LETTERS.map(([c, l]) => `<option value="${c}">${l}</option>`).join("");
 const toEn = s => String(s || "").replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).trim();
 function syncType() {
   const t = typeEl.value, plate = t === "8", pair = t === "6", moto = t === "9";
@@ -716,6 +715,7 @@ function buildQuery() {
   if (type === "8") {
     const two = toEn($("pl2").value), three = toEn($("pl3").value), ser = toEn($("plS").value), letter = $("plL").value;
     if (!/^\d{2}$/.test(two) || !/^\d{3}$/.test(three) || !/^\d{2}$/.test(ser)) return { error: "پلاک را کامل وارد کنید: ۲ رقم، حرف، ۳ رقم و سریال ایران (۲ رقم)." };
+    if (!letter) return { error: "حرف پلاک را انتخاب کنید." };
     const code = IRAN_SERIAL[ser];
     if (!code) return { error: "سریال ایران " + ser + " در لیست پلاک‌های شخصی سنهاب نیست." };
     const lt = PLATE_LETTERS.find(x => String(x[0]) === letter)[1];
