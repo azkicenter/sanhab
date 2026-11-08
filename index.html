@@ -573,6 +573,7 @@
           <option value="1">شماره بیمه نامه</option>
           <option value="3">کد یکتا</option>
           <option value="8">شماره پلاک</option>
+          <option value="9">پلاک موتورسیکلت</option>
         </select>
       </div>
       <div class="field">
@@ -587,6 +588,14 @@
           <input id="pl3" class="p3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="345">
           <span class="sep">ایران</span>
           <input id="plS" class="ps" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="70">
+        </div>
+      </div>
+      <div class="field hidden" id="motoField" style="flex:2">
+        <label>پلاک موتورسیکلت (شماره، سریال ایران)</label>
+        <div class="plate-inputs">
+          <input id="mN" type="text" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="28891" style="width:96px">
+          <span class="sep">ایران</span>
+          <input id="mS" class="p3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="516">
         </div>
       </div>
       <div class="pair-inputs hidden" id="pairField">
@@ -677,11 +686,12 @@ const IRAN_SERIAL = {"11": 79, "12": 80, "13": 81, "14": 82, "15": 83, "16": 84,
 $("plL").innerHTML = PLATE_LETTERS.map(([c, l]) => `<option value="${c}">${l}</option>`).join("");
 const toEn = s => String(s || "").replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).trim();
 function syncType() {
-  const t = typeEl.value, plate = t === "8", pair = t === "6";
+  const t = typeEl.value, plate = t === "8", pair = t === "6", moto = t === "9";
   $("plateField").classList.toggle("hidden", !plate);
+  $("motoField").classList.toggle("hidden", !moto);
   $("pairField").classList.toggle("hidden", !pair);
-  $("val").closest(".field").classList.toggle("hidden", plate || pair);
-  $("val").required = !(plate || pair);
+  $("val").closest(".field").classList.toggle("hidden", plate || pair || moto);
+  $("val").required = !(plate || pair || moto);
   $("val").placeholder = PLACEHOLDERS[t] || "مقدار جستجو";
 }
 typeEl.addEventListener("change", syncType);
@@ -696,6 +706,11 @@ function buildQuery() {
     if (!code) return { error: "سریال ایران " + ser + " در لیست پلاک‌های شخصی سنهاب نیست." };
     const lt = PLATE_LETTERS.find(x => String(x[0]) === letter)[1];
     return { params: { type, value: `${two}${lt}${three}-${ser}`, first2Digit: two, middleLetter: letter, last3Digit: three, policeCodeId: String(code) } };
+  }
+  if (type === "9") {
+    const num = toEn($("mN").value), ser = toEn($("mS").value);
+    if (!/^\d{3,8}$/.test(num) || !/^\d{3}$/.test(ser)) return { error: "پلاک موتورسیکلت را کامل وارد کنید: شماره پلاک و سریال ایران (۳ رقم)." };
+    return { params: { type, value: `${num}-${ser}`, policeNumber: num, serial: ser } };
   }
   if (type === "6") {
     const eng = $("pEng").value.trim(), cha = $("pCha").value.trim();
@@ -1135,7 +1150,7 @@ function clearResults() {
   listMap = {}; detailMap = {};
   $("go").disabled = false;
 }
-["type", "val", "pl2", "plL", "pl3", "plS", "pEng", "pCha"].forEach(id => {
+["type", "val", "pl2", "plL", "pl3", "plS", "mN", "mS", "pEng", "pCha"].forEach(id => {
   $(id).addEventListener("input", clearResults);
   $(id).addEventListener("change", clearResults);
 });
