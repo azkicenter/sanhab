@@ -177,6 +177,7 @@
   .plate-input .pi { position: absolute; box-sizing: border-box; margin: 0; padding: 0; min-width: 0; border: 0; border-radius: 4px; background: transparent;
     box-shadow: none; color: #111; font-weight: 700; text-align: center; text-align-last: center; direction: ltr;
     -webkit-appearance: none; appearance: none; line-height: 1; font-family: inherit; }
+  .plate-hint { font-size: 0.74rem !important; }
   .plate-input .pi::placeholder { color: rgba(0,0,0,.22); }
   .plate-input .pi:hover { background: rgba(0,0,0,.05); }
   .plate-input .pi:focus { background: rgba(37,99,235,.14); box-shadow: 0 0 0 2px rgba(37,99,235,.55); }
@@ -596,19 +597,20 @@
         <input id="val" type="text" required autocomplete="off" placeholder="مثلاً NAS821100M1317741">
       </div>
       <div class="field hidden" id="plateField" style="flex:2">
+        <label class="plate-hint">شماره پلاک را در کادر زیر وارد کنید</label>
         <div class="plate-input" id="plateBox">
-          <input id="pl2" class="pi pi2" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="12" aria-label="دو رقم اول">
+          <input id="pl2" class="pi pi2" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="۱۲" aria-label="دو رقم اول">
           <select id="plL" class="pi piL" aria-label="حرف"></select>
-          <input id="pl3" class="pi pi3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="345" aria-label="سه رقم">
-          <input id="plS" class="pi piS" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="70" aria-label="سریال ایران">
+          <input id="pl3" class="pi pi3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="۳۴۵" aria-label="سه رقم">
+          <input id="plS" class="pi piS" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="۷۰" aria-label="سریال ایران">
         </div>
       </div>
       <div class="field hidden" id="motoField" style="flex:2">
         <label>پلاک موتورسیکلت (شماره، سریال ایران)</label>
         <div class="plate-inputs">
-          <input id="mN" type="text" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="28891" style="width:96px">
+          <input id="mN" type="text" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="۲۸۸۹۱" style="width:96px">
           <span class="sep">ایران</span>
-          <input id="mS" class="p3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="516">
+          <input id="mS" class="p3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="۵۱۶">
         </div>
       </div>
       <div class="pair-inputs hidden" id="pairField">
@@ -1168,6 +1170,18 @@ function clearResults() {
   $(id).addEventListener("input", clearResults);
   $(id).addEventListener("change", clearResults);
 });
+// پلاک: ارقام فارسی و رفتن خودکار به کادر بعدی (۲ رقم ← حرف ← ۳ رقم ← سریال ← دکمه جستجو)
+(() => {
+  const FA = "۰۱۲۳۴۵۶۷۸۹", toFa = v => toEn(v).replace(/\D/g, "").replace(/\d/g, d => FA[d]);
+  const next = { pl2: "plL", pl3: "plS", plS: "go" }, prev = { plL: "pl2", pl3: "plL", plS: "pl3" };
+  const go = id => { const el = $(id); el.focus(); if (id === "plL") { try { el.showPicker(); } catch (_) {} } };
+  ["pl2", "pl3", "plS", "mN", "mS"].forEach(id => $(id).addEventListener("input", e => {
+    const el = e.target; el.value = toFa(el.value);
+    if (next[id] && el.value.length >= el.maxLength) go(next[id]);
+  }));
+  $("plL").addEventListener("change", () => { if ($("plL").value) $("pl3").focus(); });
+  ["pl3", "plS"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Backspace" && !e.target.value) { e.preventDefault(); go(prev[id]); } }));
+})();
 
 // ---------- کلیک‌ها ----------
 document.addEventListener("click", async e => {
