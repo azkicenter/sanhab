@@ -140,9 +140,15 @@
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
-    align-items: flex-end;
+    align-items: center;           /* همهٔ کادرها و دکمه‌ها وسط‌چین (عمودی) */
     margin-bottom: 16px;
+    padding: 42px 16px 16px;
+    gap: 30px 12px;
   }
+  /* برچسب‌ها از چیدمان خارج‌اند تا مرکز کادرها دقیقاً روی هم بیفتد */
+  .search-box .field { position: relative; gap: 0; }
+  .search-box .field > label { position: absolute; inset-inline-start: 0; bottom: 100%; margin-bottom: 5px; white-space: nowrap; height: 20px; line-height: 20px; }
+  .search-box select, .search-box input:not(.pi), .search-box #go { height: 40px; padding-block: 0; box-sizing: border-box; }
   .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
   label { font-size: 0.8rem; color: var(--ink-soft); font-weight: 500; }
   select, input, textarea {
@@ -172,14 +178,14 @@
   .plate-inputs .sep { color: var(--ink-soft); font-size: 0.8rem; }
   #plateField .plate-inputs, #motoField .plate-inputs { justify-content: flex-end; }
   /* پلاک معمولی: ورودی‌ها روی خود تصویر پلاک (۳۵۰×۷۸) */
-  .plate-input { position: relative; width: min(100%, 202px); aspect-ratio: 350 / 78; margin-inline-start: auto; direction: ltr;
+  .plate-input { position: relative; width: min(100%, 180px); aspect-ratio: 350 / 78; margin-inline-start: auto; direction: ltr;
     background: url('plates/national.png') no-repeat center / 100% 100%; border-radius: 4px; container-type: inline-size; }
   .plate-input .pi { position: absolute; box-sizing: border-box; margin: 0; padding: 0; min-width: 0; border: 0; border-radius: 4px; background: transparent;
     box-shadow: none; color: #111; font-weight: 700; text-align: center; text-align-last: center; direction: ltr;
     -webkit-appearance: none; appearance: none; line-height: 1; font-family: inherit; }
   .plate-hint { font-size: 0.74rem !important; height: 20px; line-height: 20px; }   /* هم‌تراز با برچسب «نوع جستجو» */
-  .plate-input.moto { width: min(100%, 150px); aspect-ratio: 374 / 231; background-image: url('plates/motorcycle.png'); }
-  .plate-input .piMS { left: 24%; width: 70%; top: 7%;  height: 42%; font-size: 19cqw; }
+  .plate-input.moto { width: min(100%, 108px); aspect-ratio: 374 / 231; background-image: url('plates/motorcycle.png'); }
+  .plate-input .piMS { left: 24%; width: 70%; top: 7%;  height: 42%; font-size: 15cqw; letter-spacing: 1px; }
   .plate-input .piMN { left: 8%;  width: 85%; top: 54%; height: 38%; font-size: 15cqw; letter-spacing: 1px; }
   .plate-input .pi::placeholder { color: rgba(0,0,0,.22); }
   .plate-input .pi:hover { background: rgba(0,0,0,.05); }
@@ -187,7 +193,7 @@
   .plate-input .pi2 { left: 13.7%; width: 17.1%; top: 14%; height: 72%; font-size: 10.5cqw; }
   .plate-input .piL { left: 31.4%; width: 16%;  top: 14%; height: 72%; font-size: 9cqw; }
   .plate-input .pi3 { left: 48%;   width: 26.9%; top: 14%; height: 72%; font-size: 10.5cqw; }
-  .plate-input .piS { left: 77.7%; width: 19.4%; top: 36%; height: 54%; font-size: 8cqw; }
+  .plate-input .piS { left: 77.7%; width: 19.4%; top: 36%; height: 54%; font-size: 8cqw; font-weight: 500; }
   .plate-input select.pi option { color: var(--ink); background: var(--select-bg); font-size: 1rem; }   /* زیر عنوان، سمت راست */
   .pair-inputs { display: flex; gap: 12px; flex: 2; min-width: 360px; }
   .pair-inputs .field { min-width: 150px; }
