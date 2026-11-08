@@ -170,7 +170,21 @@
   .plate-inputs .pl { width: 64px; }
   .plate-inputs .ps { width: 70px; }
   .plate-inputs .sep { color: var(--ink-soft); font-size: 0.8rem; }
-  #plateField .plate-inputs, #motoField .plate-inputs { justify-content: flex-end; }   /* زیر عنوان، سمت راست */
+  #plateField .plate-inputs, #motoField .plate-inputs { justify-content: flex-end; }
+  /* پلاک معمولی: ورودی‌ها روی خود تصویر پلاک (۳۵۰×۷۸) */
+  .plate-input { position: relative; width: min(100%, 320px); aspect-ratio: 350 / 78; margin-inline-start: auto; direction: ltr;
+    background: url('plates/national.png') no-repeat center / 100% 100%; border-radius: 4px; container-type: inline-size; }
+  .plate-input .pi { position: absolute; box-sizing: border-box; margin: 0; padding: 0; min-width: 0; border: 0; border-radius: 4px; background: transparent;
+    box-shadow: none; color: #111; font-weight: 700; text-align: center; text-align-last: center; direction: ltr;
+    -webkit-appearance: none; appearance: none; line-height: 1; font-family: inherit; }
+  .plate-input .pi::placeholder { color: rgba(0,0,0,.22); }
+  .plate-input .pi:hover { background: rgba(0,0,0,.05); }
+  .plate-input .pi:focus { background: rgba(37,99,235,.14); box-shadow: 0 0 0 2px rgba(37,99,235,.55); }
+  .plate-input .pi2 { left: 13.7%; width: 17.1%; top: 14%; height: 72%; font-size: 10.5cqw; }
+  .plate-input .piL { left: 31.4%; width: 16%;  top: 14%; height: 72%; font-size: 9cqw; }
+  .plate-input .pi3 { left: 48%;   width: 26.9%; top: 14%; height: 72%; font-size: 10.5cqw; }
+  .plate-input .piS { left: 77.7%; width: 19.4%; top: 36%; height: 54%; font-size: 8cqw; }
+  .plate-input select.pi option { color: var(--ink); background: var(--select-bg); font-size: 1rem; }   /* زیر عنوان، سمت راست */
   .pair-inputs { display: flex; gap: 12px; flex: 2; min-width: 360px; }
   .pair-inputs .field { min-width: 150px; }
   .pair-inputs input { direction: ltr; text-align: left; }
@@ -583,12 +597,11 @@
       </div>
       <div class="field hidden" id="plateField" style="flex:2">
         <label>پلاک (۲ رقم، حرف، ۳ رقم، سریال ایران)</label>
-        <div class="plate-inputs">
-          <input id="pl2" class="p2" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="12">
-          <select id="plL" class="pl"></select>
-          <input id="pl3" class="p3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="345">
-          <span class="sep">ایران</span>
-          <input id="plS" class="ps" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="70">
+        <div class="plate-input" id="plateBox">
+          <input id="pl2" class="pi pi2" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="12" aria-label="دو رقم اول">
+          <select id="plL" class="pi piL" aria-label="حرف"></select>
+          <input id="pl3" class="pi pi3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="345" aria-label="سه رقم">
+          <input id="plS" class="pi piS" type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="70" aria-label="سریال ایران">
         </div>
       </div>
       <div class="field hidden" id="motoField" style="flex:2">
