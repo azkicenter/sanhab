@@ -178,6 +178,9 @@
     box-shadow: none; color: #111; font-weight: 700; text-align: center; text-align-last: center; direction: ltr;
     -webkit-appearance: none; appearance: none; line-height: 1; font-family: inherit; }
   .plate-hint { font-size: 0.74rem !important; }
+  .plate-input.moto { width: min(100%, 150px); aspect-ratio: 374 / 231; background-image: url('plates/motorcycle.png'); }
+  .plate-input .piMS { left: 24%; width: 70%; top: 7%;  height: 42%; font-size: 19cqw; }
+  .plate-input .piMN { left: 8%;  width: 85%; top: 54%; height: 38%; font-size: 15cqw; letter-spacing: 1px; }
   .plate-input .pi::placeholder { color: rgba(0,0,0,.22); }
   .plate-input .pi:hover { background: rgba(0,0,0,.05); }
   .plate-input .pi:focus { background: rgba(37,99,235,.14); box-shadow: 0 0 0 2px rgba(37,99,235,.55); }
@@ -606,11 +609,10 @@
         </div>
       </div>
       <div class="field hidden" id="motoField" style="flex:2">
-        <label>پلاک موتورسیکلت (شماره، سریال ایران)</label>
-        <div class="plate-inputs">
-          <input id="mN" type="text" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="۲۸۸۹۱" style="width:96px">
-          <span class="sep">ایران</span>
-          <input id="mS" class="p3" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="۵۱۶">
+        <label class="plate-hint">شماره پلاک را در کادر زیر وارد کنید</label>
+        <div class="plate-input moto" id="motoBox">
+          <input id="mS" class="pi piMS" type="text" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="۵۱۶" aria-label="سه رقم بالا (سریال ایران)">
+          <input id="mN" class="pi piMN" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="۲۸۸۹۱" aria-label="پنج رقم پایین">
         </div>
       </div>
       <div class="pair-inputs hidden" id="pairField">
@@ -1173,14 +1175,14 @@ function clearResults() {
 // پلاک: ارقام فارسی و رفتن خودکار به کادر بعدی (۲ رقم ← حرف ← ۳ رقم ← سریال ← دکمه جستجو)
 (() => {
   const FA = "۰۱۲۳۴۵۶۷۸۹", toFa = v => toEn(v).replace(/\D/g, "").replace(/\d/g, d => FA[d]);
-  const next = { pl2: "plL", pl3: "plS", plS: "go" }, prev = { plL: "pl2", pl3: "plL", plS: "pl3" };
+  const next = { pl2: "plL", pl3: "plS", plS: "go", mS: "mN", mN: "go" }, prev = { plL: "pl2", pl3: "plL", plS: "pl3", mN: "mS" };
   const go = id => { const el = $(id); el.focus(); if (id === "plL") { try { el.showPicker(); } catch (_) {} } };
   ["pl2", "pl3", "plS", "mN", "mS"].forEach(id => $(id).addEventListener("input", e => {
     const el = e.target; el.value = toFa(el.value);
     if (next[id] && el.value.length >= el.maxLength) go(next[id]);
   }));
   $("plL").addEventListener("change", () => { if ($("plL").value) $("pl3").focus(); });
-  ["pl3", "plS"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Backspace" && !e.target.value) { e.preventDefault(); go(prev[id]); } }));
+  ["pl3", "plS", "mN"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Backspace" && !e.target.value) { e.preventDefault(); go(prev[id]); } }));
 })();
 
 // ---------- کلیک‌ها ----------
