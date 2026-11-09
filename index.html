@@ -641,7 +641,7 @@ let BASE = readBase();
 const API_PATH = "/api/sanhab";
 const $ = id => document.getElementById(id);
 const out = $("out"), statusEl = $("status"), printTitleEl = $("printTitle"), typeEl = $("type");
-const COLS = 11;              // تعداد ستون‌های جدول
+const COLS = 10;              // تعداد ستون‌های جدول
 const DETAIL_CONCURRENCY = 3; // تعداد درخواست‌های هم‌زمان برای جزئیات (اگر خطا زیاد شد 1 بگذارید)
 
 // ---------- کمکی‌ها ----------
@@ -1037,8 +1037,7 @@ function rowCells(rowId) {
     <td class="num">${dash(L.start)}</td>
     <td class="num">${dash(L.end)}</td>
     <td>${wait(() => discCell(v?.tpPct, v?.tpYears))}</td>
-    <td>${wait(() => discCell(v?.drPct, v?.drYears))}</td>
-    <td>${historyCell(D)}</td>`;
+    <td>${wait(() => discCell(v?.drPct, v?.drYears))}</td>`;
 }
 // هر بیمه‌نامه یک <tbody> است: ردیف اصلی + (در صورت وجود) خط خسارت‌ها و الحاقیه‌ها، همیشه باز
 function groupHtml(rowId) {
@@ -1156,7 +1155,7 @@ $("f").addEventListener("submit", async e => {
         <table class="policy-table">
           <thead><tr>
             <th>کد یکتا</th><th>شرکت</th><th>شماره بیمه‌نامه</th><th>بیمه‌گذار</th><th>پلاک</th><th>نوع خودرو</th>
-            <th>موتور / شاسی / وین</th><th>تاریخ شروع</th><th>تاریخ پایان</th><th>تخفیف ثالث</th><th>تخفیف راننده</th><th>سوابق</th>
+            <th>موتور / شاسی / وین</th><th>تاریخ شروع</th><th>تاریخ پایان</th><th>تخفیف ثالث</th><th>تخفیف راننده</th>
           </tr></thead>
           ${ids.map(id => `<tbody class="policy-group" data-row="${h(id)}">${groupHtml(id)}</tbody>`).join("")}
         </table>
