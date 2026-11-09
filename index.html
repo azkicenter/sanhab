@@ -162,6 +162,13 @@
     padding: 42px 16px 16px;
     gap: 30px 12px;
   }
+  /* پلاک: کادرها کوچک‌ترند؛ نوع جستجو + پلاک + دکمه کنار هم و وسط‌چین می‌شوند (جابه‌جایی با انیمیشن) */
+  .search-box.compact { justify-content: center; gap: 30px 16px; }
+  .search-box.compact > .field { flex: 0 0 auto !important; min-width: 0; }
+  .search-box.compact > .field:first-child { flex-basis: 260px !important; }
+  .search-box.compact > #plateField { flex-basis: 180px !important; }
+  .search-box.compact > #motoField { flex-basis: 108px !important; }
+  .search-box.compact .plate-input { margin-inline-start: 0; }
   /* برچسب‌ها از چیدمان خارج‌اند تا مرکز کادرها دقیقاً روی هم بیفتد */
   .search-box .field { position: relative; gap: 0; }
   .search-box .field > label { position: absolute; inset-inline-start: 0; bottom: 100%; margin-bottom: 5px; white-space: nowrap; height: 20px; line-height: 20px; }
@@ -753,14 +760,31 @@ const PLATE_LETTERS = [[1,"الف"],[2,"ب"],[3,"ت"],[4,"ث"],[5,"ج"],[6,"ح"]
 const IRAN_SERIAL = {"11": 79, "12": 80, "13": 81, "14": 82, "15": 83, "16": 84, "17": 85, "18": 86, "19": 87, "20": 88, "21": 89, "22": 90, "23": 91, "24": 92, "25": 93, "27": 95, "28": 96, "29": 97, "31": 98, "32": 99, "33": 100, "34": 101, "35": 102, "36": 103, "37": 104, "38": 105, "39": 106, "41": 107, "42": 108, "43": 109, "44": 110, "45": 111, "46": 112, "47": 113, "48": 114, "49": 115, "51": 116, "52": 117, "53": 118, "54": 119, "55": 120, "56": 121, "57": 122, "58": 123, "59": 124, "60": 125, "61": 126, "62": 127, "63": 128, "64": 129, "65": 130, "66": 131, "67": 132, "68": 133, "69": 134, "70": 135, "71": 136, "72": 137, "73": 138, "74": 139, "75": 140, "76": 141, "77": 142, "78": 143, "79": 144, "81": 145, "82": 146, "83": 147, "85": 149, "86": 150, "87": 151, "88": 152, "89": 153, "91": 154, "92": 155, "93": 156, "94": 157, "95": 158, "96": 159, "97": 160, "98": 161, "30": 892, "40": 893, "50": 894, "80": 895, "90": 896, "99": 897};
 $("plL").innerHTML = `<option value="" selected></option>` + PLATE_LETTERS.map(([c, l]) => `<option value="${c}">${l}</option>`).join("");
 const toEn = s => String(s || "").replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).trim();
+const searchForm = $("f");
+let firstSync = true;
 function syncType() {
   const t = typeEl.value, plate = t === "8", pair = t === "6", moto = t === "9";
+  const items = () => [...searchForm.children].filter(e => !e.classList.contains("hidden"));
+  const before = new Map(items().map(e => [e, e.getBoundingClientRect()]));
   $("plateField").classList.toggle("hidden", !plate);
   $("motoField").classList.toggle("hidden", !moto);
   $("pairField").classList.toggle("hidden", !pair);
   $("val").closest(".field").classList.toggle("hidden", plate || pair || moto);
+  searchForm.classList.toggle("compact", plate || moto);
   $("val").required = !(plate || pair || moto);
   $("val").placeholder = PLACEHOLDERS[t] || "مقدار جستجو";
+  if (firstSync) { firstSync = false; return; }
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !Element.prototype.animate) return;
+  const opt = { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" };
+  items().forEach(e => {
+    const a = e.getBoundingClientRect(), b = before.get(e);
+    if (b) {                                  // کادرِ موجود: از جای قبلی به جای جدید می‌لغزد
+      const dx = b.left - a.left, dy = b.top - a.top;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) e.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], opt);
+    } else {                                  // کادرِ تازه: محو و کمی بزرگ می‌شود
+      e.animate([{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "none" }], opt);
+    }
+  });
 }
 typeEl.addEventListener("change", syncType);
 syncType();
