@@ -1060,7 +1060,7 @@ function eventsOf(t) {
       if (!i) return;                                   // ستون اول ردیف/شماره است
       const c = cells[i];
       if (empty(c)) return;
-      if (DATE_RE.test(k)) dates.push([k.replace(/^تاریخ\s*/, ""), c]);
+      if (DATE_RE.test(k)) { if (!/پرداخت/.test(k)) dates.push([k.replace(/^تاریخ\s*/, ""), c]); }   // تاریخ پرداخت خسارت نمایش داده نمی‌شود
       else if (!type && TYPE_RE.test(k)) type = String(c);
     });
     return { type, dates };
