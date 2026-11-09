@@ -1148,6 +1148,9 @@ $("f").addEventListener("submit", async e => {
       ids.push(id);
       listMap[id] = { policy: x.cells[ix.policy], company: x.cells[ix.company], holder: x.cells[ix.holder], start: x.cells[ix.start], end: x.cells[ix.end] };
     });
+    // پاسارگاد: جزئیات همراه همان پاسخ لیست می‌آید -> بدون درخواست‌های ۳تایی
+    const inline = r.details && ids.length && ids.every(id => r.details[id]);
+    if (inline) ids.forEach(id => { detailMap[id] = r.details[id]; });
     out.innerHTML = `
       <div class="table-wrap glass">
         <table class="policy-table">
@@ -1159,7 +1162,8 @@ $("f").addEventListener("submit", async e => {
         </table>
       </div>`;
     $("go").disabled = false;
-    await loadDetails(myId, ids.filter(id => !id.startsWith("r")));
+    if (inline) setStatus(`تعداد بیمه‌نامه یافت‌شده: ${ids.length}`);
+    else await loadDetails(myId, ids.filter(id => !id.startsWith("r")));
   } catch (err) {
     if (err.message === NEED_LOGIN) setStatus("");
     else setStatus(err.message === "Failed to fetch" ? "سرور تا چند دقیقه در دسترس نبود. نیازی به رفرش نیست؛ کمی بعد دوباره دکمه‌ی جستجو را بزنید." : "خطا: " + err.message, "error");
