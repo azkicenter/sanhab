@@ -1131,7 +1131,7 @@ function eventsOf(t, fullLabel) {
       else if (!type && TYPE_RE.test(k)) type = String(c);
     });
     return { type, dates };
-  });
+  }).filter((e, i, arr) => !fullLabel || arr.findIndex(x => x.type === e.type && JSON.stringify(x.dates) === JSON.stringify(e.dates)) === i);   // خسارت: نوع و تاریخ حادثه یکی = یک خسارت
 }
 function dateHtml([label, value]) {
   return `<span class="ev-date">${label ? h(label) + ": " : ""}<span class="num">${h(value)}</span></span>`;
