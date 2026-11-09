@@ -186,6 +186,8 @@
   input:-webkit-autofill { -webkit-text-fill-color: var(--ink) !important; -webkit-box-shadow: 0 0 0 1000px rgba(217,236,255,.9) inset !important; }
   html[data-theme="dark"] input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #141b2e inset !important; }
   #val { direction: ltr; text-align: left; }
+  /* متن راهنما راست‌چین؛ به‌محض تایپ (مقدار لاتین) چپ‌به‌راست می‌شود */
+  #val:placeholder-shown, #lu:placeholder-shown, #en:placeholder-shown, .pair-inputs input:placeholder-shown { direction: rtl; text-align: right; }
   .plate-inputs { display: flex; gap: 6px; align-items: center; direction: ltr; }
   .plate-inputs input, .plate-inputs select { text-align: center; padding: 9px 6px; }
   .plate-inputs .p2 { width: 56px; }
