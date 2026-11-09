@@ -238,6 +238,15 @@
   .status { margin: 8px 4px; font-size: 0.85rem; color: var(--ink-soft); }
   .status.error { color: var(--danger); }
   .status.loading { color: var(--accent-strong); }
+  /* کارت «در حال استعلام» */
+  .searching { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 34px 16px; margin: 10px 0 20px; text-align: center;
+    border-radius: 20px; background: var(--surface-strong); border: 1px solid var(--line); box-shadow: 0 8px 28px rgba(15,27,51,.08); }
+  .searching .sp { width: 46px; height: 46px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--accent-strong); animation: sp-spin .9s linear infinite; }
+  .searching b { color: var(--ink); font-size: 1rem; }
+  .searching small { color: var(--ink-soft); font-size: .84rem; }
+  .searching .sec { color: var(--ink-faint); font-size: .78rem; font-variant-numeric: tabular-nums; }
+  @keyframes sp-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .searching .sp { animation-duration: 3s; } }
   .empty-note { color: var(--ink-soft); font-size: 0.85rem; padding: 20px; text-align: center; }
 
   /* ========== جدول ========== */
@@ -1199,7 +1208,12 @@ $("f").addEventListener("submit", async e => {
   const value = q.params.value;
   const myId = ++searchId;
   $("go").disabled = true; out.innerHTML = ""; listMap = {}; detailMap = {};
-  setStatus("در حال استعلام... (ممکن است چند ثانیه طول بکشد)", "loading");
+  setStatus("");
+  out.innerHTML = `<div class="searching" role="status"><div class="sp"></div><b>در حال استعلام از بیمه مرکزی…</b><small>ممکن است چند ثانیه طول بکشد</small><span class="sec">۰ ثانیه</span></div>`;
+  { const card = out.firstElementChild, t0 = Date.now(), tick = setInterval(() => {
+      const sec = card.querySelector(".sec"); if (!card.isConnected || !sec) return clearInterval(tick);
+      sec.textContent = Math.floor((Date.now() - t0) / 1000).toLocaleString("fa-IR") + " ثانیه";
+    }, 500); }
   try {
     current = q.params;
     const r = await call(current, () => myId !== searchId);
@@ -1231,6 +1245,7 @@ $("f").addEventListener("submit", async e => {
     if (inline) setStatus(`تعداد بیمه‌نامه یافت‌شده: ${ids.length}`);
     else await loadDetails(myId, ids.filter(id => !id.startsWith("r")));
   } catch (err) {
+    if (myId === searchId && out.querySelector(".searching")) out.innerHTML = "";
     if (err.message === NEED_LOGIN) setStatus("");
     else setStatus(err.message === "Failed to fetch" ? "سرور تا چند دقیقه در دسترس نبود. نیازی به رفرش نیست؛ کمی بعد دوباره دکمه‌ی جستجو را بزنید." : "خطا: " + err.message, "error");
   } finally {
