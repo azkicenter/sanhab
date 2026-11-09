@@ -192,8 +192,8 @@
   select option { color: var(--ink); background: var(--select-bg); }
   input:-webkit-autofill { -webkit-text-fill-color: var(--ink) !important; -webkit-box-shadow: 0 0 0 1000px rgba(217,236,255,.9) inset !important; }
   html[data-theme="dark"] input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #141b2e inset !important; }
-  #val { direction: ltr; text-align: left; }
-  /* متن راهنما راست‌چین؛ به‌محض تایپ (مقدار لاتین) چپ‌به‌راست می‌شود */
+  #val { direction: ltr; text-align: right; }
+  /* مقدار و متن راهنما هر دو راست‌چین؛ ترتیب حروف/ارقام لاتین حفظ می‌شود */
   #val:placeholder-shown, #lu:placeholder-shown, #en:placeholder-shown, .pair-inputs input:placeholder-shown { direction: rtl; text-align: right; }
   .plate-inputs { display: flex; gap: 6px; align-items: center; direction: ltr; }
   .plate-inputs input, .plate-inputs select { text-align: center; padding: 9px 6px; }
@@ -223,7 +223,7 @@
   .plate-input select.pi option { color: var(--ink); background: var(--select-bg); font-size: 1rem; }   /* زیر عنوان، سمت راست */
   .pair-inputs { display: flex; gap: 12px; flex: 2; min-width: 360px; }
   .pair-inputs .field { min-width: 150px; }
-  .pair-inputs input { direction: ltr; text-align: left; }
+  .pair-inputs input { direction: ltr; text-align: right; }
   button, select, input, textarea, code { font-family: inherit; }
   button { cursor: pointer; font-family: inherit; }
   .btn-primary, .search-box #go, .login-card .pane > button:not(.link-btn) {
