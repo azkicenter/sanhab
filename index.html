@@ -1051,7 +1051,7 @@ function refreshRow(rowId) {
 // از جدول خسارت/الحاقیه سنهاب فقط «نوع» و «تاریخ‌ها» را برمی‌داریم (اسم ستون‌ها ممکن است کمی فرق کند)
 const TYPE_RE = /نوع|علت|شرح|عنوان|موضوع/;
 const DATE_RE = /تاریخ/;
-function eventsOf(t) {
+function eventsOf(t, fullLabel) {
   const head = (t?.head || []).map(norm);
   return (t?.rows || []).map(r => {
     const cells = r.cells || [];
@@ -1060,7 +1060,7 @@ function eventsOf(t) {
       if (!i) return;                                   // ستون اول ردیف/شماره است
       const c = cells[i];
       if (empty(c)) return;
-      if (DATE_RE.test(k)) { if (!/پرداخت/.test(k)) dates.push([k.replace(/^تاریخ\s*/, ""), c]); }   // تاریخ پرداخت خسارت نمایش داده نمی‌شود
+      if (DATE_RE.test(k)) { if (!/پرداخت/.test(k)) dates.push([fullLabel ? k : k.replace(/^تاریخ\s*/, ""), c]); }   // تاریخ پرداخت خسارت نمایش داده نمی‌شود
       else if (!type && TYPE_RE.test(k)) type = String(c);
     });
     return { type, dates };
@@ -1072,12 +1072,12 @@ function dateHtml([label, value]) {
 function subRowsHtml(rowId) {
   const D = detailMap[rowId], L = listMap[rowId];
   if (!D || D.error) return "";
-  const dmg = eventsOf(D.damages), end = eventsOf(D.endorsements);
+  const dmg = eventsOf(D.damages, true), end = eventsOf(D.endorsements);
   if (!dmg.length && !end.length) return "";
   let lines = "";
   if (dmg.length) {
     lines += `<div class="ev-line ev-damage"><span class="ev-title">${dmg.length} خسارت</span>${dmg.map(e =>
-      `<span class="ev-chip">${e.type ? `<b>${h(e.type)}</b>` : ""}${e.dates.map(dateHtml).join("")}${!e.type && !e.dates.length ? "بدون جزئیات" : ""}</span>`).join("")}</div>`;
+      `<span class="ev-chip">${e.type ? `<b>${h(e.type)}</b>${e.dates.length ? " ، " : ""}` : ""}${e.dates.map(dateHtml).join("")}${!e.type && !e.dates.length ? "بدون جزئیات" : ""}</span>`).join("")}</div>`;
   }
   if (end.length) {
     const endType = s => norm(s).includes("مفاد") ? "تغییر در مفاد" : s;
