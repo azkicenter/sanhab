@@ -838,8 +838,8 @@ async function reloadConfig() {
 const RETRY_DELAYS = [0, 1500, 3000, 5000, 8000, 10000, 10000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 15000];
 const SERVER_DOWN = [502, 503, 504, 530, 521, 522, 523, 524];
 function notifyRetry(n, total) {
-  const msg = `ارتباط با سرور قطع شد؛ در حال اتصال دوباره… (تلاش ${n} از ${total}) — نیازی به رفرش نیست`;
-  if ($("app").classList.contains("hidden")) loginStatus(msg, "loading"); else setStatus(msg, "loading");
+  // خودکار دوباره تلاش می‌شود؛ پیام «قطع شد» نشان نمی‌دهیم تا کاربر فکر نکند سرور خراب است (در برنامه کارت «در حال استعلام» دیده می‌شود)
+  if ($("app").classList.contains("hidden")) loginStatus("در حال ورود…", "loading");
 }
 async function resilientFetch(path, opts, isStale) {
   let lastErr;
@@ -1274,7 +1274,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-09-c", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-09-d", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
