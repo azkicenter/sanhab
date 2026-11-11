@@ -1294,7 +1294,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-10-a", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-11-a", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
