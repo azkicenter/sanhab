@@ -1127,15 +1127,16 @@ function eventsOf(t, fullLabel) {
   const head = (t?.head || []).map(norm);
   return (t?.rows || []).map(r => {
     const cells = r.cells || [];
-    let type = "", dates = [];
+    let type = "", dates = [], extras = [];
     head.forEach((k, i) => {
       if (!i) return;                                   // ستون اول ردیف/شماره است
       const c = cells[i];
       if (empty(c)) return;
       if (DATE_RE.test(k)) { if (!/پرداخت/.test(k)) dates.push([fullLabel ? k : k.replace(/^تاریخ\s*/, ""), c]); }   // تاریخ پرداخت خسارت نمایش داده نمی‌شود
       else if (!type && TYPE_RE.test(k)) type = String(c);
+      else if (!fullLabel) extras.push([k, String(c)]);   // الحاقیه: بقیه‌ی ستون‌های پاسارگاد (شماره انتظامی، شاسی، موتور، وین، ...) هم نشان داده می‌شود
     });
-    return { type, dates };
+    return { type, dates, extras };
   }).filter((e, i, arr) => !fullLabel || arr.findIndex(x => x.type === e.type && JSON.stringify(x.dates) === JSON.stringify(e.dates)) === i);   // خسارت: نوع و تاریخ حادثه یکی = یک خسارت
 }
 function dateHtml([label, value]) {
@@ -1154,7 +1155,7 @@ function subRowsHtml(rowId) {
   if (end.length) {
     const endType = s => norm(s).includes("مفاد") ? "تغییر در مفاد" : s;
     lines += `<div class="ev-line ev-endorse"><span class="ev-title">${end.length} الحاقیه</span>${end.map(e =>
-      `<span class="ev-chip">${e.type ? `<b>${h(endType(e.type))}</b>` : ""}${e.dates.map(dateHtml).join("")}${!e.type && !e.dates.length ? "بدون جزئیات" : ""}</span>`).join("")}${
+      `<span class="ev-chip">${e.type ? `<b>${h(endType(e.type))}</b>` : ""}${e.dates.map(dateHtml).join("")}${e.extras.map(dateHtml).join("")}${!e.type && !e.dates.length && !e.extras.length ? "بدون جزئیات" : ""}</span>`).join("")}${
       norm(L.company).includes("ایران") && !norm(L.company).includes("معین") ? `<span class="ev-note">بیمه ایران: برای بررسی الحاقیه، چاپ الحاقیه را دریافت کنید.</span>` : ""}</div>`;
   }
   return `<tr class="sub-row"><td colspan="${COLS + 1}">${lines}</td></tr>`;
@@ -1311,7 +1312,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-12-d", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-12-e", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
