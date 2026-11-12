@@ -1281,7 +1281,10 @@ $("lu").value = store.get(LAST_USER_KEY);
 if (store.get(TOKEN_KEY)) {
   showApp();
   // هر بار باز شدن صفحه نشست تمدید می‌شود؛ کسی که مرتب استفاده کند بیرون نمی‌افتد
-  fetch(BASE + "/api/me", { headers: { Authorization: "Bearer " + store.get(TOKEN_KEY) } })
+  (async () => {                                   // اول آدرس تازه‌ی تونل را از Supabase بگیر (config.js ممکن است کهنه باشد)
+    if (!window.__cfgSynced) { window.__cfgSynced = true; await reloadConfig(); BASE = readBase(); }
+    return fetch(BASE + "/api/me", { headers: { Authorization: "Bearer " + store.get(TOKEN_KEY) } });
+  })()
     .then(async r => {
       if (r.status === 401) return sessionExpired();
       if (r.ok) { const d = await r.json(); if (d.token) { store.set(TOKEN_KEY, d.token); store.set(USER_KEY, d.user); $("userName").textContent = d.user; } }
@@ -1295,7 +1298,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-12-a", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-12-b", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
