@@ -449,6 +449,20 @@
   .ev-endorse .ev-chip { background: var(--purple-soft); color: var(--purple); border-color: var(--purple-line); }
   .ev-note { color: var(--purple); font-size: 0.7rem; opacity: .9; }
 
+  /* صفحه‌ی عریض (لپ‌تاپ/مانیتور): فونت جدول نتایج بزرگ‌تر؛ در صفحه‌ی باریک‌تر همان اندازه‌ی قبلی تا جدول بهم نریزد */
+  @media screen and (min-width: 1340px) {
+    table.policy-table { font-size: 0.9rem; }
+    table.policy-table thead th { padding: 10px 4px; }
+    table.policy-table td { padding: 8px 4px; }
+    .muted { font-size: 0.84rem; }
+    .disc .pct { font-size: 1rem; }
+    .disc .yrs { font-size: 0.8rem; }
+    .pill { font-size: 0.82rem; }
+    .ev-line { font-size: 0.86rem; }
+    .ev-note { font-size: 0.82rem; }
+    .copy-btn svg { width: 15px; height: 15px; }
+  }
+
   .print-title { display: none; }
   .app-footer {
     text-align: center;
@@ -1298,7 +1312,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-12-b", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-12-c", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
