@@ -579,7 +579,7 @@
     <div class="login-card glass">
       <img class="login-logo" src="assets/img-f2fddbd7.png" alt="Azki Seller">
       <h2>استعلام سنهاب ازکی سلر</h2>
-      <form id="loginForm" class="pane">
+      <form id="loginForm" class="pane" method="post" action="javascript:void(0)">
         <p class="login-note">نام کاربری و رمز عبور را وارد کنید.</p>
         <div class="field">
           <label>نام کاربری</label>
@@ -592,7 +592,7 @@
         <button id="loginBtn">ورود</button>
       </form>
 
-      <form id="enrollForm" class="pane hidden">
+      <form id="enrollForm" class="pane hidden" method="post" action="javascript:void(0)">
         <p class="login-note">کد دسترسی تیم را از مدیر بگیرید و یک نام کاربری برای خودتان انتخاب کنید.</p>
         <div class="field">
           <label>کد دسترسی تیم</label>
@@ -605,7 +605,7 @@
         <button id="enrollBtn">ادامه</button>
       </form>
 
-      <form id="confirmForm" class="pane hidden">
+      <form id="confirmForm" class="pane hidden" method="post" action="javascript:void(0)">
         <p class="login-note">اپ Google Authenticator یا Microsoft Authenticator را باز کنید، «+» و بعد «اسکن QR» را بزنید.</p>
         <div class="qr-box"><div id="qr"></div></div>
         <a id="otpLink" class="otp-link" href="#">روی گوشی هستید؟ برای افزودن مستقیم به اپ اینجا بزنید</a>
@@ -625,7 +625,7 @@
   </div>
 
   <div id="app" class="hidden">
-    <form class="search-box glass" id="f">
+    <form class="search-box glass" id="f" method="post" action="javascript:void(0)">
       <div class="field">
         <label>نوع جستجو</label>
         <select id="type">
