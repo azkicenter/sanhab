@@ -449,6 +449,20 @@
   html[data-theme="dark"] .ev-damage .ev-title, html[data-theme="dark"] .ev-endorse .ev-title { color: #12101c; }
   .ev-endorse .ev-chip { background: var(--purple-soft); color: var(--purple); border-color: var(--purple-line); }
   .ev-note { color: var(--purple); font-size: 0.7rem; opacity: .9; }
+  .end-toggle {
+    font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+    padding: 2px 11px; border-radius: 999px; border: 1px solid var(--purple-line);
+    background: transparent; color: var(--purple); line-height: 1.7;
+  }
+  .end-toggle:hover { background: var(--purple-soft); }
+  .end-table-wrap { margin-top: 6px; overflow-x: auto; }
+  tbody.policy-group table.end-table { border-collapse: collapse; font-size: 0.78rem; min-width: 60%; }
+  tbody.policy-group table.end-table th, tbody.policy-group table.end-table td {
+    padding: 5px 12px; text-align: center; white-space: nowrap; border: 1px solid var(--purple-line);
+  }
+  tbody.policy-group table.end-table th { background: var(--purple-soft); color: var(--purple); font-weight: 800; position: static; }
+  tbody.policy-group table.end-table td { background: transparent; color: var(--ink); }
+  tbody.policy-group table.end-table td .num { font-weight: 600; }
 
   /* صفحه‌ی عریض (لپ‌تاپ/مانیتور): فونت جدول نتایج بزرگ‌تر؛ در صفحه‌ی باریک‌تر همان اندازه‌ی قبلی تا جدول بهم نریزد */
   @media screen and (min-width: 1340px) {
@@ -461,6 +475,8 @@
     .pill { font-size: 0.82rem; }
     .ev-line { font-size: 0.86rem; }
     .ev-note { font-size: 0.82rem; }
+    .end-toggle { font-size: 0.84rem; }
+    tbody.policy-group table.end-table { font-size: 0.9rem; }
     .copy-btn svg { width: 15px; height: 15px; }
   }
 
@@ -1144,6 +1160,14 @@ function eventsOf(t, fullLabel) {
 function dateHtml([label, value]) {
   return `<span class="ev-date">${label ? h(label) + ": " : ""}<span class="num">${h(value)}</span></span>`;
 }
+const openEnd = new Set();                              // بیمه‌نامه‌هایی که جدول جزئیات الحاقیه‌شان باز است
+function endTableHtml(t) {                              // همه‌ی ستون‌های الحاقیه به شکل جدول (ستون‌های کاملاً خالی نمایش داده نمی‌شوند)
+  const head = (t?.head || []).map(norm), rows = t?.rows || [];
+  const cols = head.map((k, i) => i).filter(i => i && rows.some(r => !empty((r.cells || [])[i])));
+  if (!cols.length) return "";
+  return `<div class="end-table-wrap"><table class="end-table"><thead><tr><th>#</th>${cols.map(i => `<th>${h(head[i])}</th>`).join("")}</tr></thead><tbody>${
+    rows.map((r, n) => `<tr><td>${n + 1}</td>${cols.map(i => `<td><span class="num">${h(empty((r.cells || [])[i]) ? "—" : r.cells[i])}</span></td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
 function subRowsHtml(rowId) {
   const D = detailMap[rowId], L = listMap[rowId];
   if (!D || D.error) return "";
@@ -1156,9 +1180,12 @@ function subRowsHtml(rowId) {
   }
   if (end.length) {
     const endType = s => norm(s).includes("مفاد") ? "تغییر در مفاد" : s;
+    const tbl = endTableHtml(D.endorsements), isOpen = openEnd.has(rowId) && tbl;
     lines += `<div class="ev-line ev-endorse"><span class="ev-title">${end.length} الحاقیه</span>${end.map(e =>
-      `<span class="ev-chip">${e.type ? `<b>${h(endType(e.type))}</b>` : ""}${e.dates.map(dateHtml).join("")}${e.extras.map(dateHtml).join("")}${!e.type && !e.dates.length && !e.extras.length ? "بدون جزئیات" : ""}</span>`).join("")}${
-      norm(L.company).includes("ایران") && !norm(L.company).includes("معین") ? `<span class="ev-note">بیمه ایران: برای بررسی الحاقیه، چاپ الحاقیه را دریافت کنید.</span>` : ""}</div>`;
+      e.type || e.dates.length ? `<span class="ev-chip">${e.type ? `<b>${h(endType(e.type))}</b>` : ""}${e.dates.map(dateHtml).join("")}</span>` : "").join("")}${
+      !tbl && !end.some(e => e.type || e.dates.length) ? `<span class="ev-chip">بدون جزئیات</span>` : ""}${
+      tbl ? `<button type="button" class="end-toggle" data-row="${h(rowId)}" aria-expanded="${isOpen ? "true" : "false"}">${isOpen ? "بستن جزئیات الحاقیه" : "نمایش جزئیات الحاقیه"}</button>` : ""}${
+      norm(L.company).includes("ایران") && !norm(L.company).includes("معین") ? `<span class="ev-note">بیمه ایران: برای بررسی الحاقیه، چاپ الحاقیه را دریافت کنید.</span>` : ""}</div>${isOpen ? tbl : ""}`;
   }
   return `<tr class="sub-row"><td colspan="${COLS + 1}">${lines}</td></tr>`;
 }
@@ -1279,6 +1306,13 @@ function clearResults() {
 
 // ---------- کلیک‌ها ----------
 document.addEventListener("click", async e => {
+  const et = e.target.closest(".end-toggle");                         // نمایش/بستن جدول جزئیات الحاقیه
+  if (et) {
+    const id = et.dataset.row;
+    if (openEnd.has(id)) openEnd.delete(id); else openEnd.add(id);
+    refreshRow(id);
+    return;
+  }
   const cb = e.target.closest(".copy-btn");
   if (cb) {
     e.stopPropagation();
@@ -1314,7 +1348,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-12-e", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-14-a", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
