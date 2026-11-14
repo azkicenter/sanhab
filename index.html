@@ -463,6 +463,9 @@
   tbody.policy-group table.end-table th { background: var(--purple-soft); color: var(--purple); font-weight: 800; position: static; }
   tbody.policy-group table.end-table td { background: transparent; color: var(--ink); }
   tbody.policy-group table.end-table td .num { font-weight: 600; }
+  .end-ids { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: right; }
+  .end-id { white-space: nowrap; }
+  .end-id b { font-weight: 700; }
 
   /* صفحه‌ی عریض (لپ‌تاپ/مانیتور): فونت جدول نتایج بزرگ‌تر؛ در صفحه‌ی باریک‌تر همان اندازه‌ی قبلی تا جدول بهم نریزد */
   @media screen and (min-width: 1340px) {
@@ -1161,12 +1164,37 @@ function dateHtml([label, value]) {
   return `<span class="ev-date">${label ? h(label) + ": " : ""}<span class="num">${h(value)}</span></span>`;
 }
 const openEnd = new Set();                              // بیمه‌نامه‌هایی که جدول جزئیات الحاقیه‌شان باز است
-function endTableHtml(t) {                              // همه‌ی ستون‌های الحاقیه به شکل جدول (ستون‌های کاملاً خالی نمایش داده نمی‌شوند)
+function endTableHtml(t) {                              // جدول الحاقیه: درصدها به «تخفیف ثالث/راننده» تبدیل و موتور/شاسی/وین زیر هم
   const head = (t?.head || []).map(norm), rows = t?.rows || [];
-  const cols = head.map((k, i) => i).filter(i => i && rows.some(r => !empty((r.cells || [])[i])));
+  const cell = (r, i) => { const v = (r.cells || [])[i]; return empty(v) ? "" : String(v); };
+  const pct = v => v ? (v.replace(/\.0+$/, "") + "%") : "";
+  const kind = k => /درصد/.test(k) && /(مالی|جانی|ثالث)/.test(k) ? "third"
+                  : /درصد/.test(k) && /(سرنشین|راننده)/.test(k) ? "driver"
+                  : /شاسی/.test(k) ? "chassis" : /موتور/.test(k) ? "engine" : /وین|وی\s*آی/.test(k) ? "vin" : "";
+  const IDS = ["engine", "chassis", "vin"], IDLABEL = { engine: "موتور", chassis: "شاسی", vin: "وین" };
+  const idx = { third: [], driver: [], engine: [], chassis: [], vin: [] }, cols = [];
+  head.forEach((k, i) => {
+    if (!i || !rows.some(r => cell(r, i))) return;           // ستون اول شماره ردیف؛ ستون کاملاً خالی نمایش داده نمی‌شود
+    const kd = kind(k);
+    if (!kd) { cols.push({ title: k, html: r => `<span class="num">${h(cell(r, i) || "—")}</span>` }); return; }
+    idx[kd].push(i);
+    const g = IDS.includes(kd) ? "ids" : kd;
+    if (!cols.some(c => c.group === g)) cols.push({ group: g });
+  });
+  cols.forEach(c => {
+    if (c.group === "third") { c.title = "درصد تخفیف ثالث الحاقیه"; c.html = r => `<span class="num">${h(pct(idx.third.map(i => cell(r, i)).find(Boolean)) || "—")}</span>`; }
+    if (c.group === "driver") { c.title = "درصد تخفیف راننده الحاقیه"; c.html = r => `<span class="num">${h(pct(idx.driver.map(i => cell(r, i)).find(Boolean)) || "—")}</span>`; }
+    if (c.group === "ids") {
+      c.title = "موتور / شاسی / وین";
+      c.html = r => {
+        const parts = IDS.map(kd => { const v = idx[kd].map(i => cell(r, i)).find(Boolean); return v ? `<span class="end-id">${IDLABEL[kd]}: <b class="num">${h(v)}</b></span>` : ""; }).join("");
+        return parts ? `<div class="end-ids">${parts}</div>` : "—";
+      };
+    }
+  });
   if (!cols.length) return "";
-  return `<div class="end-table-wrap"><table class="end-table"><thead><tr><th>#</th>${cols.map(i => `<th>${h(head[i])}</th>`).join("")}</tr></thead><tbody>${
-    rows.map((r, n) => `<tr><td>${n + 1}</td>${cols.map(i => `<td><span class="num">${h(empty((r.cells || [])[i]) ? "—" : r.cells[i])}</span></td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  return `<div class="end-table-wrap"><table class="end-table"><thead><tr><th>#</th>${cols.map(c => `<th>${h(c.title)}</th>`).join("")}</tr></thead><tbody>${
+    rows.map((r, n) => `<tr><td>${n + 1}</td>${cols.map(c => `<td>${c.html(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 function subRowsHtml(rowId) {
   const D = detailMap[rowId], L = listMap[rowId];
@@ -1348,7 +1376,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-14-a", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-14-b", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
