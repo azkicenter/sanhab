@@ -323,6 +323,7 @@
   .ids-cell { text-align: right; }
   .ids-cell .field-line { justify-content: flex-start; }
   .ids-line { white-space: nowrap; line-height: 1.9; }
+  .ids-line .pct { display: inline-block; unicode-bidi: isolate; margin-inline-start: .6em; padding: 0 .5em; border-radius: 6px; background: rgba(99,102,241,.12); font-weight: 600; }
   .ids-line .lbl { color: var(--muted, #64748b); }
   .field-line .field-label { color: var(--ink-soft); font-weight: 600; flex-shrink: 0; }
   .field-line .field-value {
@@ -1193,7 +1194,7 @@ function endTableHtml(t) {                              // جدول الحاقی
     if (c.group === "hist") {
       c.title = "سابقه";
       c.html = r => {                                     // سابقه: سال عدم خسارت ثالث + درصد تخفیف ثالث / سال عدم خسارت راننده + درصد تخفیف راننده
-        const line = (label, y, p) => (y || p) ? `<div class="ids-line"><span class="lbl">${label}:</span> <b class="num">${h(y || "—")}</b> سال${p ? ` <span class="num">— ${h(pct(p))}</span>` : ""}</div>` : "";
+        const line = (label, y, p) => (y || p) ? `<div class="ids-line"><span class="lbl">${label}:</span> <b class="num">${h(y || "—")}</b> سال${p ? ` <span class="pct" dir="ltr">${h(pct(p))}</span>` : ""}</div>` : "";
         const out = line("سال عدم خسارت ثالث", first(r, "y3"), first(r, "third")) + line("سال عدم خسارت راننده", first(r, "yd"), first(r, "driver"));
         return out ? `<div class="ids-cell">${out}</div>` : "—";
       };
@@ -1389,7 +1390,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-14-f", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-14-g", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
