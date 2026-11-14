@@ -468,9 +468,6 @@
   tbody.policy-group table.end-table th { background: var(--purple-soft); color: var(--purple); font-weight: 800; position: static; }
   tbody.policy-group table.end-table td { background: transparent; color: var(--ink); }
   tbody.policy-group table.end-table td .num { font-weight: 600; }
-  .end-ids { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: right; }
-  .end-id { white-space: nowrap; }
-  .end-id b { font-weight: 700; }
 
   /* صفحه‌ی عریض (لپ‌تاپ/مانیتور): فونت جدول نتایج بزرگ‌تر؛ در صفحه‌ی باریک‌تر همان اندازه‌ی قبلی تا جدول بهم نریزد */
   @media screen and (min-width: 1340px) {
@@ -1192,9 +1189,9 @@ function endTableHtml(t) {                              // جدول الحاقی
     if (c.group === "driver") { c.title = "درصد تخفیف راننده الحاقیه"; c.html = r => `<span class="num">${h(pct(idx.driver.map(i => cell(r, i)).find(Boolean)) || "—")}</span>`; }
     if (c.group === "ids") {
       c.title = "موتور / شاسی / وین";
-      c.html = r => {
-        const parts = IDS.map(kd => { const v = idx[kd].map(i => cell(r, i)).find(Boolean); return v ? `<span class="end-id">${IDLABEL[kd]}: <b class="num">${h(v)}</b></span>` : ""; }).join("");
-        return parts ? `<div class="end-ids">${parts}</div>` : "—";
+      c.html = r => {                                     // مثل جدول اصلی: موتور / شاسی / وین زیر هم، هر کدام با دکمه کپی
+        const parts = IDS.map(kd => { const v = idx[kd].map(i => cell(r, i)).find(Boolean); return v ? copyField(IDLABEL[kd] + ": ", v) : ""; }).join("");
+        return parts ? `<div class="ids-cell">${parts}</div>` : "—";
       };
     }
   });
@@ -1381,7 +1378,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-14-c", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-14-d", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
