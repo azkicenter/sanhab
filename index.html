@@ -322,6 +322,8 @@
   /* موتور / شاسی / وین: زیر هم و راست‌چین (لبه‌ی راست برچسب‌ها هم‌تراز) */
   .ids-cell { text-align: right; }
   .ids-cell .field-line { justify-content: flex-start; }
+  .ids-line { white-space: nowrap; line-height: 1.9; }
+  .ids-line .lbl { color: var(--muted, #64748b); }
   .field-line .field-label { color: var(--ink-soft); font-weight: 600; flex-shrink: 0; }
   .field-line .field-value {
     font-family: inherit;
@@ -1171,26 +1173,35 @@ function endTableHtml(t) {                              // جدول الحاقی
   const head = (t?.head || []).map(norm), rows = t?.rows || [];
   const cell = (r, i) => { const v = (r.cells || [])[i]; return empty(v) ? "" : String(v); };
   const pct = v => v ? (v.replace(/\.0+$/, "") + "%") : "";
-  const kind = k => /درصد/.test(k) && /(مالی|جانی|ثالث)/.test(k) ? "third"
+  const kind = k => /سال/.test(k) && /(مالی|جانی|ثالث)/.test(k) ? "y3"
+                  : /سال/.test(k) && /(سرنشین|راننده)/.test(k) ? "yd"
+                  : /درصد/.test(k) && /(مالی|جانی|ثالث)/.test(k) ? "third"
                   : /درصد/.test(k) && /(سرنشین|راننده)/.test(k) ? "driver"
                   : /شاسی/.test(k) ? "chassis" : /موتور/.test(k) ? "engine" : /وین|وی\s*آی/.test(k) ? "vin" : "";
-  const IDS = ["engine", "chassis", "vin"], IDLABEL = { engine: "موتور", chassis: "شاسی", vin: "وین" };
-  const idx = { third: [], driver: [], engine: [], chassis: [], vin: [] }, cols = [];
+  const IDS = ["engine", "chassis", "vin"], IDLABEL = { engine: "موتور", chassis: "شاسی", vin: "وین" }, HIST = ["y3", "yd", "third", "driver"];
+  const idx = { y3: [], yd: [], third: [], driver: [], engine: [], chassis: [], vin: [] }, cols = [];
   head.forEach((k, i) => {
     if (!i || !rows.some(r => cell(r, i))) return;           // ستون اول شماره ردیف؛ ستون کاملاً خالی نمایش داده نمی‌شود
     const kd = kind(k);
     if (!kd) { cols.push({ title: k, html: r => `<span class="num">${h(cell(r, i) || "—")}</span>` }); return; }
     idx[kd].push(i);
-    const g = IDS.includes(kd) ? "ids" : kd;
-    if (!cols.some(c => c.group === g)) cols.push({ group: g });
+    const g = IDS.includes(kd) ? "ids" : "hist";
+    if (HIST.includes(kd) || IDS.includes(kd)) { if (!cols.some(c => c.group === g)) cols.push({ group: g }); }
   });
+  const first = (r, kd) => idx[kd].map(i => cell(r, i)).find(Boolean) || "";
   cols.forEach(c => {
-    if (c.group === "third") { c.title = "درصد تخفیف ثالث الحاقیه"; c.html = r => `<span class="num">${h(pct(idx.third.map(i => cell(r, i)).find(Boolean)) || "—")}</span>`; }
-    if (c.group === "driver") { c.title = "درصد تخفیف راننده الحاقیه"; c.html = r => `<span class="num">${h(pct(idx.driver.map(i => cell(r, i)).find(Boolean)) || "—")}</span>`; }
+    if (c.group === "hist") {
+      c.title = "سابقه";
+      c.html = r => {                                     // سابقه: سال عدم خسارت ثالث + درصد تخفیف ثالث / سال عدم خسارت راننده + درصد تخفیف راننده
+        const line = (label, y, p) => (y || p) ? `<div class="ids-line"><span class="lbl">${label}:</span> <b class="num">${h(y || "—")}</b> سال${p ? ` <span class="num">— ${h(pct(p))}</span>` : ""}</div>` : "";
+        const out = line("سال عدم خسارت ثالث", first(r, "y3"), first(r, "third")) + line("سال عدم خسارت راننده", first(r, "yd"), first(r, "driver"));
+        return out ? `<div class="ids-cell">${out}</div>` : "—";
+      };
+    }
     if (c.group === "ids") {
       c.title = "موتور / شاسی / وین";
       c.html = r => {                                     // مثل جدول اصلی: موتور / شاسی / وین زیر هم، هر کدام با دکمه کپی
-        const parts = IDS.map(kd => { const v = idx[kd].map(i => cell(r, i)).find(Boolean); return v ? copyField(IDLABEL[kd] + ": ", v) : ""; }).join("");
+        const parts = IDS.map(kd => { const v = first(r, kd); return v ? copyField(IDLABEL[kd] + ": ", v) : ""; }).join("");
         return parts ? `<div class="ids-cell">${parts}</div>` : "—";
       };
     }
@@ -1378,7 +1389,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-14-e", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-14-f", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
