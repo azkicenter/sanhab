@@ -1158,7 +1158,7 @@ function eventsOf(t, fullLabel) {
       if (empty(c)) return;
       if (DATE_RE.test(k)) { if (!/پرداخت/.test(k)) dates.push([fullLabel ? k : k.replace(/^تاریخ\s*/, ""), c]); }   // تاریخ پرداخت خسارت نمایش داده نمی‌شود
       else if (!type && TYPE_RE.test(k)) type = String(c);
-      else if (!fullLabel) extras.push([k, String(c)]);   // الحاقیه: بقیه‌ی ستون‌های پاسارگاد (شماره انتظامی، شاسی، موتور، وین، ...) هم نشان داده می‌شود
+      else if (!fullLabel) extras.push([k, String(c)]);   // الحاقیه: بقیه‌ی ستون‌ها (شماره انتظامی، شاسی، موتور، وین، ...) هم نشان داده می‌شود
     });
     return { type, dates, extras };
   }).filter((e, i, arr) => !fullLabel || arr.findIndex(x => x.type === e.type && JSON.stringify(x.dates) === JSON.stringify(e.dates)) === i);   // خسارت: نوع و تاریخ حادثه یکی = یک خسارت
@@ -1285,7 +1285,7 @@ $("f").addEventListener("submit", async e => {
       ids.push(id);
       listMap[id] = { policy: x.cells[ix.policy], company: x.cells[ix.company], holder: x.cells[ix.holder], start: x.cells[ix.start], end: x.cells[ix.end] };
     });
-    // پاسارگاد: جزئیات همراه همان پاسخ لیست می‌آید -> بدون درخواست‌های ۳تایی
+    // جزئیات همراه همان پاسخ لیست می‌آید -> بدون درخواست‌های ۳تایی
     const inline = r.details && ids.length && ids.every(id => r.details[id]);
     if (inline) ids.forEach(id => { detailMap[id] = r.details[id]; });
     out.innerHTML = `
@@ -1378,7 +1378,7 @@ if (store.get(TOKEN_KEY)) {
 <script>
 // بروزرسانی خودکار: هر ۱ دقیقه و هنگام برگشتن به تب، نسخه‌ی صفحه با نسخه‌ی منتشرشده مقایسه می‌شود.
 (function () {
-  var BUILD = "2026-11-14-d", bar = document.getElementById("updateBar");
+  var BUILD = "2026-11-14-e", bar = document.getElementById("updateBar");
   function check() {
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
       var m = t.match(/var BUILD = "([^"]+)"/);
